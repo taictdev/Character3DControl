@@ -212,7 +212,7 @@ namespace StarterAssets
 
             //CinemachineCameraTarget.transform.rotation = Quaternion.Euler(_cinemachineTargetPitch + CameraAngleOverride + yRotation,
             //    _cinemachineTargetYaw + xRotation, 0.0f);
-
+#if UNITY_EDITOR
             if (Mouse.current != null && Mouse.current.leftButton.isPressed)
             {
                 Debug.Log($"x= {Mouse.current.leftButton.ReadValue()}");
@@ -230,6 +230,7 @@ namespace StarterAssets
                     mouseY = Mouse.current.delta.ReadValue().y;
                 }
             }
+#endif
 #if !UNITY_EDITOR
             if (Touchscreen.current == null || Touchscreen.current.touches.Count == 0)
                 return;

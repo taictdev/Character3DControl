@@ -1,32 +1,50 @@
 ﻿using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
-using System.Runtime.InteropServices.WindowsRuntime;
+using UnityEngine.InputSystem;
 
 public class MouseLook : MonoBehaviour
 {
-    public float mouseSensitivity = 30;
+    public float mouseSensitivity = 10;
     public Transform playerBody;
 
-    float xRotation;
-    float yRotation;
+    private float xRotation;
+    private float yRotation;
+    private bool lockY = true;
 
-    void Start()
+    private void Update()
     {
-        //Cursor.lockState = CursorLockMode.Locked;
+#if UNITY_ANDROID || UNITY_IOS
+        HandleTouchInput();
+#else
+        HandleMouseInput();
+#endif
+        mouseX *= mouseSensitivity;
+        mouseY *= mouseSensitivity;
+
+        xRotation += mouseX * Time.deltaTime;
+        if (lockY == false)
+        {
+            yRotation += mouseY * Time.deltaTime;
+        }
+
+        transform.localRotation = Quaternion.Euler(-yRotation, -xRotation, 0);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnGUI()
     {
-        float mouseX = 0;
-        float mouseY = 0;
+        if (GUI.Button(new Rect(0, 0, 100, 50), "Lock Y"))
+        {
+            lockY = !lockY;
+        }
+    }
 
+    private float mouseX;
+    private float mouseY;
 
+    private void HandleMouseInput()
+    {
         if (Mouse.current != null && Mouse.current.leftButton.isPressed)
         {
-            Debug.Log($"x= {Mouse.current.leftButton.ReadValue()}");
-            Debug.Log($"y= {Mouse.current.leftButton.ReadValue()}");
             if (EventSystem.current.IsPointerOverGameObject())
             {
                 Debug.Log($"delta x= {Mouse.current.delta.ReadValue().x}");
@@ -34,60 +52,28 @@ public class MouseLook : MonoBehaviour
                 return;
             }
 
-            if (!EventSystem.current.IsPointerOverGameObject())
-            {
-                mouseX = Mouse.current.delta.ReadValue().x;
-                mouseY = Mouse.current.delta.ReadValue().y;
-            }
+            mouseX = Mouse.current.delta.ReadValue().x;
+            mouseY = Mouse.current.delta.ReadValue().y;
+        }
+    }
+
+    private void HandleTouchInput()
+    {
+        if (Touchscreen.current == null || Touchscreen.current.touches.Count == 0)
+            return;
+
+        int touchIndex = 0;
+
+        if (Touchscreen.current.touches.Count > 1 && Touchscreen.current.touches[1].isInProgress)
+        {
+            touchIndex = 1;
         }
 
-        //if (Gamepad.current != null)
-        //{
-        //    mouseX = Gamepad.current.rightStick.ReadValue().x;
-        //    mouseY = Gamepad.current.rightStick.ReadValue().y;
-        //}
+        if (EventSystem.current.IsPointerOverGameObject(Touchscreen.current.touches[touchIndex].touchId.ReadValue()))
+            return;
 
-        //float mouseX = Input.GetAxis("Mouse X");
-        //float mouseY = Input.GetAxis("Mouse Y");
-
-        //if (Touchscreen.current == null || Touchscreen.current.touches.Count == 0)
-        //    return;
-
-        //if (EventSystem.current.IsPointerOverGameObject(Touchscreen.current.touches[0].touchId.ReadValue()))
-        //{
-        //    if (Touchscreen.current.touches.Count > 1 && Touchscreen.current.touches[1].isInProgress)
-        //    {
-        //        if (EventSystem.current.IsPointerOverGameObject(Touchscreen.current.touches[1].touchId.ReadValue()))
-        //            return;
-
-        //        Vector2 touchDeltaPosition = Touchscreen.current.touches[1].delta.ReadValue();
-        //        mouseX = touchDeltaPosition.x;
-        //        mouseY = touchDeltaPosition.y;
-        //    }
-        //}
-        //else
-        //{
-        //    if (Touchscreen.current.touches.Count > 0 && Touchscreen.current.touches[0].isInProgress)
-        //    {
-        //        if (EventSystem.current.IsPointerOverGameObject(Touchscreen.current.touches[0].touchId.ReadValue()))
-        //            return;
-
-        //        Vector2 touchDeltaPosition = Touchscreen.current.touches[0].delta.ReadValue();
-        //        mouseX = touchDeltaPosition.x;
-        //        mouseY = touchDeltaPosition.y;
-        //    }
-
-        //}
-
-        mouseX *= mouseSensitivity;
-        mouseY *= mouseSensitivity;
-
-        xRotation += mouseX * Time.deltaTime;
-        yRotation += mouseY * Time.deltaTime;
-        //xRotation = Mathf.Clamp(xRotation, -80, 80);
-
-        transform.localRotation = Quaternion.Euler(yRotation, xRotation, 0);
-
-        // playerBody.Rotate(Vector3.up * mouseX * Time.deltaTime);
+        Vector2 touchDeltaPosition = Touchscreen.current.touches[touchIndex].delta.ReadValue();
+        mouseX = touchDeltaPosition.x;
+        mouseY = touchDeltaPosition.y;
     }
 }
